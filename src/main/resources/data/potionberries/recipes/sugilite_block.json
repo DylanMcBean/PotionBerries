@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "potionberries:sugilite_ingot"
+    }
+  },
+  "result": {
+    "item": "potionberries:sugilite_block"
+  }
+}

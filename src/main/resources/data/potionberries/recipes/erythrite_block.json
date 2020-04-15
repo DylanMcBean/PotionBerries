@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "potionberries:erythrite_ingot"
+    }
+  },
+  "result": {
+    "item": "potionberries:erythrite_block"
+  }
+}

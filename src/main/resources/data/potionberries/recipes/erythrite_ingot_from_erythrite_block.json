@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "potionberries:erythrite_block"
+    }
+  ],
+  "result": {
+    "item": "potionberries:erythrite_ingot",
+    "count": 9
+  }
+}

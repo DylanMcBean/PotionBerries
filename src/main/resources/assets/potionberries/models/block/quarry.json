@@ -1,0 +1,7 @@
+{
+  "parent": "block/cube_column",
+  "textures": {
+    "end": "potionberries:blocks/quarry_up",
+    "side": "potionberries:blocks/quarry_side"
+  }
+}

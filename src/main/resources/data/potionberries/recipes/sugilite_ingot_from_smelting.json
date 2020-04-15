@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "potionberries:sugilite_ore"
+  },
+  "result": "potionberries:sugilite_ingot",
+  "experience": 0.8,
+  "cookingtime": 220
+}

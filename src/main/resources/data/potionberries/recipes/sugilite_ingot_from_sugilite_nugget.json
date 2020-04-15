@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "potionberries:sugilite_nugget"
+    }
+  },
+  "result": {
+    "item": "potionberries:sugilite_ingot"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "potionberries:chrysocolla_block"
+    }
+  ],
+  "result": {
+    "item": "potionberries:chrysocolla_ingot",
+    "count": 9
+  }
+}

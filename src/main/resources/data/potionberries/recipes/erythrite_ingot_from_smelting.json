@@ -1,0 +1,9 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "potionberries:erythrite_ore"
+  },
+  "result": "potionberries:erythrite_ingot",
+  "experience": 0.85,
+  "cookingtime": 240
+}

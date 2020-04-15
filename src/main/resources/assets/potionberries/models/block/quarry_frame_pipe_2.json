@@ -1,0 +1,18 @@
+{
+    "textures": {
+        "pipe_connector": "potionberries:blocks/pipe_connector"
+    },
+    "elements": [
+        {
+            "name": "Cube",
+            "from": [ 0, 6, 6 ], 
+            "to": [ 16, 10, 10 ], 
+            "faces": {
+                "north": { "texture": "#pipe_connector", "uv": [ 0, 8, 16, 12 ] },
+                "south": { "texture": "#pipe_connector", "uv": [ 0, 8, 16, 12 ] },
+                "up": { "texture": "#pipe_connector", "uv": [ 0, 12, 16, 8 ] },
+                "down": { "texture": "#pipe_connector", "uv": [ 0, 8, 16, 12 ] }
+            }
+        }
+    ]
+}

@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "age=0": {"model": "potionberries:block/berry_bush_4_stage0"},
+    "age=1": {"model": "potionberries:block/berry_bush_4_stage1"},
+    "age=2": {"model": "potionberries:block/strength_berry_bush_4_stage2"},
+    "age=3": {"model": "potionberries:block/strength_berry_bush_4_stage3"}
+  }
+}
