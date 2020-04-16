@@ -17,13 +17,12 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
-import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import static com.pyrodeathadder.potionberries.objects.blocks.Quarry.FACING;
 import static com.pyrodeathadder.potionberries.objects.blocks.QuarryFrame.SECTION;
@@ -35,12 +34,13 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
     public boolean initialised, running = false;
     public BlockPos previousBlockBreak;
     public boolean xAligned;
-    public int width = (int)(Math.random()*30)+2;
-    public int length = (int)(Math.random()*30)+2;
+    public int width = 16;//(int)(Math.random()*14)+2;
+    public int length = 16;//(int)(Math.random()*14)+2;
     ArrayList<Item> allowedItems;
     public TileEntity quarryStorage;
     public String facingPositon;
     public ArrayList<ItemStack> quarryInternalStorage = new ArrayList<ItemStack>();
+    public final HashMap<String, Integer> quarryBlocksMinned = new HashMap<>();
     private int tickGoal = 100;
     private boolean movingToNextBlock;
     private BlockPos nextBlockPosition;
@@ -75,7 +75,6 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
             PotionBerries.LOGGER.info("Storage full");
             ItemStack stack = quarryInternalStorage.get(0);
             quarryInternalStorage.remove(0);
-
             quarryStorage.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.DOWN).ifPresent(it -> {
                 ItemStack te = ItemHandlerHelper.insertItemStacked(it,new ItemStack(stack.getItem(),stack.getCount()),false);
                 if (te != ItemStack.EMPTY)  quarryInternalStorage.add(te);
@@ -210,8 +209,6 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
                 yoffset --;
             }
         } else {
-            //xoffset = 0;
-            //zoffset = 0;
             if(!finished) {
                 findNextBlock();
             }
@@ -223,7 +220,7 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
             BlockState blockState = world.getBlockState(quarryBlockRelative(new BlockPos(xoffset, yoffset, zoffset)));
             float Hardness = blockState.getBlockHardness(world, quarryBlockRelative(new BlockPos(xoffset, yoffset, zoffset)));
             int harvest = blockState.getHarvestLevel();
-            int newTickRate = (int) (((Math.max(1, harvest) / 6f) + (Hardness / 80f)) * 50f);
+            int newTickRate = (int) (((Math.max(1, harvest) / 6f) + (Hardness / 80f)) * 5f);
             tickGoal = (blockState.isAir(world, pos) || !blockState.getFluidState().isEmpty()) ? 1 : newTickRate;
             movingToNextBlock = false;
             nextBlockPosition = null;
@@ -232,16 +229,11 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
     }
 
     private void findNextBlock() {
-        int xoff = 0;//this.xoffset;
-        int yoff;
-        if (yoffset % 2 == 0) yoff = this.yoffset < 4? yoffset + 1: yoffset;
-        else if (this.yoffset < 3) yoff = yoffset + 2;
-        else yoff = 4;
-
-        int zoff = 0;//this.zoffset;
-        boolean px = true;
-        boolean pz = true;
-
+        int xoff = xoffset;
+        int yoff = yoffset;
+        int zoff = zoffset;
+        boolean px = positiveX;
+        boolean pz = positiveZ;
         BlockState blockState = world.getBlockState(quarryBlockRelative(new BlockPos(xoff, xoff, xoff)));
         while(((blockState.isAir(world, pos)||!blockState.getFluidState().isEmpty())||!(blockState.getBlock() != BlockInit.QUARRYFRAME.get()) || blockState.getBlockHardness(world, pos) < 0) && this.ypos + yoff > 0){
             if (xoff == this.width - 1 && px || xoff == 0 && !px) {
@@ -264,6 +256,8 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
             nextBlockPosition = new BlockPos(xoff, yoff, zoff);
             movingToNextBlock = true;
             tickGoal = 1;
+            positiveX = px;
+            positiveZ = pz;
         }
     }
 
@@ -287,9 +281,34 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
             IFluidState iFluidState = world.getFluidState(pos);
             if (dropBlock) {
                 TileEntity tileEntity = blockState.hasTileEntity() ? world.getTileEntity(pos) : null;
-                final Object holder = quarryStorage; //Make a copy of the chest beforehand
+                if (tileEntity != null) {
+                    tileEntity.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY).ifPresent(tile -> {
+                        int invSize = tile.getSlots();
+                        for (int i = 0; i < invSize; i++) {
+                            ItemStack prestack = tile.getStackInSlot(i);
+                            ItemStack stack = new ItemStack(tile.getStackInSlot(i).getItem(), prestack.getCount());
+                            if (stack.getCount() != 0) quarryInternalStorage.add(stack);
+                            String n = stack.getItem().toString();
+                            if(this.quarryBlocksMinned.containsKey(n)) {
+                                this.quarryBlocksMinned.put(n, this.quarryBlocksMinned.get(n)+stack.getCount());
+                            } else {
+                                this.quarryBlocksMinned.put(n,1);
+                            }
+                            tile.getStackInSlot(i).setCount(0);
+                        } //Add items in tile to quarry internal storage then break
+                    });
+                }
                 if (!(world instanceof ServerWorld)) return false;
                 Block.getDrops(blockState, (ServerWorld) world, pos, tileEntity, entity, ItemStack.EMPTY).forEach(drop -> { //get the drops for the block you have broken and loop through them
+                    //add drops to hashmap
+                    String n = drop.getItem().toString();
+                    if(this.quarryBlocksMinned.containsKey(n)) {
+                        this.quarryBlocksMinned.put(n, this.quarryBlocksMinned.get(n)+drop.getCount());
+                    } else {
+                        this.quarryBlocksMinned.put(n,1);
+                    }
+
+
                     quarryStorage.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.DOWN).ifPresent(it -> {
                         ItemStack te = ItemHandlerHelper.insertItem(it,new ItemStack(drop.getItem(),1),false);
                         if (te != ItemStack.EMPTY)  quarryInternalStorage.add(te);

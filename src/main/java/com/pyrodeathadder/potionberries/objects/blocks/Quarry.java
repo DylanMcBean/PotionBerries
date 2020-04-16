@@ -1,28 +1,27 @@
 package com.pyrodeathadder.potionberries.objects.blocks;
 
-import com.pyrodeathadder.potionberries.PotionBerries;
 import com.pyrodeathadder.potionberries.init.ModTileEntityType;
 import com.pyrodeathadder.potionberries.tileentity.QuarryTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.HorizontalBlock;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.InventoryHelper;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.StateContainer;
-import net.minecraft.tileentity.DispenserTileEntity;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.IBlockReader;
-import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
+import java.util.*;
 
 public class Quarry extends Block {
     public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
@@ -83,10 +82,40 @@ public class Quarry extends Block {
     }
 
     @Override
-    public void onBlockClicked(BlockState p_196270_1_, World p_196270_2_, BlockPos p_196270_3_, PlayerEntity p_196270_4_) {
-        quarryTileEntity.removeStructure();
-        quarryTileEntity.width = (int)(Math.random()*30)+2;
-        quarryTileEntity.length = (int)(Math.random()*30)+2;
-        quarryTileEntity.createStructure();
+    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos blockPos, PlayerEntity player, Hand handIn, BlockRayTraceResult rayTraceIn) {
+        if (!worldIn.isRemote) {
+            sortByValue(quarryTileEntity.quarryBlocksMinned);
+            Minecraft.getInstance().player.sendMessage(new StringTextComponent("Items Collected:"));
+            for(Map.Entry entry: quarryTileEntity.quarryBlocksMinned.entrySet()) {
+                Minecraft.getInstance().player.sendMessage(new StringTextComponent("    " + entry.getKey().toString() + ": " + entry.getValue().toString()));
+                //worldIn.getServer().getPlayerList().sendMessage(new TranslationTextComponent(entry.getKey().toString() + ": " + entry.getValue().toString()));
+            }
+        }
+        return ActionResultType.SUCCESS;
+    }
+
+
+
+    public static HashMap<String, Integer> sortByValue(HashMap<String, Integer> hm)
+    {
+        // Create a list from elements of HashMap
+        List<Map.Entry<String, Integer> > list =
+                new LinkedList<Map.Entry<String, Integer> >(hm.entrySet());
+
+        // Sort the list
+        Collections.sort(list, new Comparator<Map.Entry<String, Integer> >() {
+            public int compare(Map.Entry<String, Integer> o1,
+                               Map.Entry<String, Integer> o2)
+            {
+                return (o1.getValue()).compareTo(o2.getValue());
+            }
+        });
+
+        // put data from sorted list to hashmap
+        HashMap<String, Integer> temp = new LinkedHashMap<String, Integer>();
+        for (Map.Entry<String, Integer> aa : list) {
+            temp.put(aa.getKey(), aa.getValue());
+        }
+        return temp;
     }
 }
