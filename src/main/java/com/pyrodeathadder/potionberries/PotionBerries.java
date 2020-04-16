@@ -4,6 +4,7 @@ import com.pyrodeathadder.potionberries.init.BlockInit;
 import com.pyrodeathadder.potionberries.init.ItemInit;
 import com.pyrodeathadder.potionberries.init.ModTileEntityType;
 import com.pyrodeathadder.potionberries.objects.blocks.Berries;
+import com.pyrodeathadder.potionberries.objects.containers.ModContainerTypes;
 import com.pyrodeathadder.potionberries.world.gen.OreGen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
@@ -43,6 +44,7 @@ public class PotionBerries
         ItemInit.ITEMS.register(modEventBus);
         BlockInit.BLOCKS.register(modEventBus);
         ModTileEntityType.TILE_ENTITY_TYPE.register(modEventBus);
+        ModContainerTypes.CONTAINER_TYPES.register(modEventBus);
 
         instance = this;
 

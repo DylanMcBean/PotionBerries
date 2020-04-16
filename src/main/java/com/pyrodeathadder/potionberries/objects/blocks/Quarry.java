@@ -5,9 +5,9 @@ import com.pyrodeathadder.potionberries.tileentity.QuarryTileEntity;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.HorizontalBlock;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.DirectionProperty;
@@ -16,9 +16,9 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
+import net.minecraftforge.fml.network.NetworkHooks;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -81,20 +81,30 @@ public class Quarry extends Block {
         }
     }
 
+//    @Override
+//    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos blockPos, PlayerEntity player, Hand handIn, BlockRayTraceResult rayTraceIn) {
+//        if (!worldIn.isRemote) {
+//            sortByValue(quarryTileEntity.quarryBlocksMinned);
+//            Minecraft.getInstance().player.sendMessage(new StringTextComponent("Items Collected:"));
+//            for(Map.Entry entry: quarryTileEntity.quarryBlocksMinned.entrySet()) {
+//                Minecraft.getInstance().player.sendMessage(new StringTextComponent("    " + entry.getKey().toString() + ": " + entry.getValue().toString()));
+//                //worldIn.getServer().getPlayerList().sendMessage(new TranslationTextComponent(entry.getKey().toString() + ": " + entry.getValue().toString()));
+//            }
+//        }
+//        return ActionResultType.SUCCESS;
+//    }
+
+
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos blockPos, PlayerEntity player, Hand handIn, BlockRayTraceResult rayTraceIn) {
+    public ActionResultType onBlockActivated(final BlockState state, final World worldIn, final BlockPos pos, final PlayerEntity player, final Hand handIn, final BlockRayTraceResult hit) {
         if (!worldIn.isRemote) {
-            sortByValue(quarryTileEntity.quarryBlocksMinned);
-            Minecraft.getInstance().player.sendMessage(new StringTextComponent("Items Collected:"));
-            for(Map.Entry entry: quarryTileEntity.quarryBlocksMinned.entrySet()) {
-                Minecraft.getInstance().player.sendMessage(new StringTextComponent("    " + entry.getKey().toString() + ": " + entry.getValue().toString()));
-                //worldIn.getServer().getPlayerList().sendMessage(new TranslationTextComponent(entry.getKey().toString() + ": " + entry.getValue().toString()));
+            final TileEntity tile = worldIn.getTileEntity(pos);
+            if (tile instanceof QuarryTileEntity) {
+                NetworkHooks.openGui((ServerPlayerEntity) player, (QuarryTileEntity) tile, pos);
             }
         }
         return ActionResultType.SUCCESS;
     }
-
-
 
     public static HashMap<String, Integer> sortByValue(HashMap<String, Integer> hm)
     {

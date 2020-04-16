@@ -233,6 +233,7 @@
   "block.potionberries.long_slow_falling_berry_bush_5": "Slow Falling Berry",
 
   "block.potionberries.quarry": "Quarry",
+  "container.quarry_type": "Quarry",
 
 
   "itemGroup.potionberries": "Potion Berries"

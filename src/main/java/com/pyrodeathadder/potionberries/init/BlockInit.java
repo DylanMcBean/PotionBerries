@@ -212,7 +212,7 @@ public class BlockInit {
     public static final RegistryObject<Block> SLOW_FALLING_BERRY_BUSH_5 = BLOCKS.register("slow_falling_berry_bush_5", () -> new Berries(Block.Properties.create(Material.PLANTS).hardnessAndResistance(0f).doesNotBlockMovement().tickRandomly().sound(SoundType.SWEET_BERRY_BUSH),5));
     public static final RegistryObject<Block> LONG_SLOW_FALLING_BERRY_BUSH_5 = BLOCKS.register("long_slow_falling_berry_bush_5", () -> new Berries(Block.Properties.create(Material.PLANTS).hardnessAndResistance(0f).doesNotBlockMovement().tickRandomly().sound(SoundType.SWEET_BERRY_BUSH),5));
 
-    public static final RegistryObject<Block> QUARRY= BLOCKS.register("quarry", () -> new Quarry(Block.Properties.create(Material.IRON).hardnessAndResistance(10f, 7.0f).sound(SoundType.STONE).harvestTool(ToolType.PICKAXE).harvestLevel(3)));
+    public static final RegistryObject<Block> QUARRY= BLOCKS.register("quarry", () -> new Quarry(Block.Properties.create(Material.IRON).hardnessAndResistance(1f, 1.0f).sound(SoundType.STONE).harvestTool(ToolType.PICKAXE).harvestLevel(3)));
     public static final RegistryObject<Block> QUARRYFRAME = BLOCKS.register("quarry_frame", () -> new QuarryFrame(Block.Properties.create(Material.IRON).hardnessAndResistance(-1, 14.0f).doesNotBlockMovement()));
     public static final RegistryObject<Block> QUARRY_STRUCTURE_FRAME = BLOCKS.register("quarry_structure_frame", () -> new Block(Block.Properties.create(Material.IRON).hardnessAndResistance(-1, 14.0f).doesNotBlockMovement()));
 }
