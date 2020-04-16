@@ -34,8 +34,8 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
     public boolean initialised, running = false;
     public BlockPos previousBlockBreak;
     public boolean xAligned;
-    public int width = 16;//(int)(Math.random()*14)+2;
-    public int length = 16;//(int)(Math.random()*14)+2;
+    public int width = 256;//(int)(Math.random()*14)+2;
+    public int length = 256;//(int)(Math.random()*14)+2;
     ArrayList<Item> allowedItems;
     public TileEntity quarryStorage;
     public String facingPositon;
@@ -234,7 +234,7 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity 
         int zoff = zoffset;
         boolean px = positiveX;
         boolean pz = positiveZ;
-        BlockState blockState = world.getBlockState(quarryBlockRelative(new BlockPos(xoff, xoff, xoff)));
+        BlockState blockState = world.getBlockState(quarryBlockRelative(new BlockPos(xoff, yoff, zoff)));
         while(((blockState.isAir(world, pos)||!blockState.getFluidState().isEmpty())||!(blockState.getBlock() != BlockInit.QUARRYFRAME.get()) || blockState.getBlockHardness(world, pos) < 0) && this.ypos + yoff > 0){
             if (xoff == this.width - 1 && px || xoff == 0 && !px) {
                 px = !px;
