@@ -21,7 +21,6 @@ public class NBTHelper {
         return null;
     }
 
-
     private static CompoundNBT writeQuarry(QuarryTileEntity o) {
         CompoundNBT compound = new CompoundNBT();
         compound.putInt("xpos", o.xpos);
@@ -40,7 +39,12 @@ public class NBTHelper {
         compound.putInt("Length", o.length);
         compound.putBoolean("xAligned", o.xAligned);
         compound.putString("FacingPositon", o.facingPositon);
-
+        compound.putBoolean("initialised", o.initialised);
+        compound.putBoolean("running", o.running);
+        compound.putBoolean("finished", o.finished);
+        compound.putInt("gridSize", o.gridSize);
+        compound.putInt("gridXOffset", o.gridXoffset);
+        compound.putInt("gridZOffset", o.gridZoffset);
         return compound;
     }
 

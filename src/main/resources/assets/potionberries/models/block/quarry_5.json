@@ -1,0 +1,12 @@
+{
+  "parent": "block/orientable",
+  "textures": {
+    "particle": "potionberries:blocks/quarry/quarry_front_0",
+    "down": "potionberries:blocks/quarry/quarry_bottom_0",
+    "up": "potionberries:blocks/quarry/quarry_top_0",
+    "north": "potionberries:blocks/quarry/quarry_front_4",
+    "east": "potionberries:blocks/quarry/quarry_left_0",
+    "south": "potionberries:blocks/quarry/quarry_right_0",
+    "west": "potionberries:blocks/quarry/quarry_right_0"
+  }
+}

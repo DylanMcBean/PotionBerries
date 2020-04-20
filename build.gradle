@@ -1,13 +1,19 @@
 buildscript {
     repositories {
         maven { url = 'https://files.minecraftforge.net/maven' }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
         jcenter()
         mavenCentral()
     }
+
     dependencies {
         classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '3.+', changing: true
+        classpath group: "com.wynprice.cursemaven", name: 'CurseMaven', version: '2.1.1'
     }
 }
+
 apply plugin: 'net.minecraftforge.gradle'
 // Only edit below this line, the above code adds and enables the necessary things for Forge to be setup.
 apply plugin: 'eclipse'
@@ -84,12 +90,28 @@ minecraft {
         }
     }
 }
+apply plugin: "com.wynprice.cursemaven"
 
 dependencies {
     // Specify the version of Minecraft to use, If this is any group other then 'net.minecraft' it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency. And it's patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
     minecraft 'net.minecraftforge:forge:1.15.2-31.1.0'
+
+    //Other mods - Testing purposes only
+    implementation fg.deobf("curse.maven:iron-chests:2898344")
+    implementation fg.deobf("curse.maven:mcjtylib:2908605")
+    implementation fg.deobf("curse.maven:rftools-power:2875983")
+    implementation fg.deobf("curse.maven:refined-storage:2871849")
+    implementation fg.deobf("curse.maven:cc-tweaked:2867087")
+    implementation fg.deobf("curse.maven:quantumstorage:2908912")
+    implementation fg.deobf("curse.maven:rftools-base:2908606")
+    implementation fg.deobf("curse.maven:rftools-builder:2908608")
+    implementation fg.deobf("curse.maven:rftools-utility:2908607")
+    implementation fg.deobf("curse.maven:rftools-storage:2908609")
+    implementation fg.deobf("curse.maven:chance-cubes:2923585")
+    implementation fg.deobf("curse.maven:refined-storage-addons:2871855")
+
 
     // You may put jars on which you depend on in ./libs or you may define them like so..
     // compile "some.group:artifact:version:classifier"

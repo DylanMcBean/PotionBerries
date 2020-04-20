@@ -3,6 +3,8 @@ package com.pyrodeathadder.potionberries.container;
 import com.pyrodeathadder.potionberries.init.BlockInit;
 import com.pyrodeathadder.potionberries.objects.containers.ModContainerTypes;
 import com.pyrodeathadder.potionberries.tileentity.QuarryTileEntity;
+import com.pyrodeathadder.potionberries.util.packets.PotionBerriesPacketHandler;
+import com.pyrodeathadder.potionberries.util.packets.VoidItemsPacket;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.container.Container;
@@ -26,22 +28,23 @@ public class QuarryContainer extends Container {
         this.tileEntity = tileEntity;
         this.canInteractWithCallable = IWorldPosCallable.of(tileEntity.getWorld(), tileEntity.getPos());
 
-
         //Main Inventory
         int startX = 8;
         int startY = 28;
         int slotSizePlus2 = 18;
-        for(int row = 0; row < 3; ++row){
-            for(int column = 0; column < 4; ++column){
-                this.addSlot(new SlotItemHandler(tileEntity.inventory, (row*3+column), startX+(column * slotSizePlus2), startY+(row * slotSizePlus2)));
+        int id = 0;
+        for(int row = 0; row < 3; row++){
+            for(int column = 0; column < 4; column++){
+                this.addSlot(new SlotItemHandler(tileEntity.inventory, id, startX+(column * slotSizePlus2), startY+(row * slotSizePlus2)));
+                id ++;
             }
         }
 
         //Player Main Inventory
         int startPlayerInY = startY * 5;
-        for(int row = 0; row < 3; ++row){
-            for(int column = 0; column < 9; ++column){
-                this.addSlot(new Slot(playerInventory,9+ (row*9+column), startX+(column * slotSizePlus2), startPlayerInY+(row * slotSizePlus2)));
+        for(int row = 0; row < 3; row++){
+            for(int column = 0; column < 9; column++){
+                this.addSlot(new Slot(playerInventory,9+ (row*9)+column, startX+(column * slotSizePlus2), startPlayerInY+(row * slotSizePlus2)));
             }
         }
 
