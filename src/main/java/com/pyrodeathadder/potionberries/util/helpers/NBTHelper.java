@@ -23,13 +23,13 @@ public class NBTHelper {
 
     private static CompoundNBT writeQuarry(QuarryTileEntity o) {
         CompoundNBT compound = new CompoundNBT();
-        compound.putInt("xpos", o.xpos);
-        compound.putInt("ypos", o.ypos);
-        compound.putInt("zpos", o.zpos);
-        compound.putInt("xoff", o.xoffset);
-        compound.putInt("yoff", o.yoffset);
-        compound.putInt("zoff", o.zoffset);
-        compound.putInt("tick", o.tick);
+        compound.putFloat("xpos", o.xpos);
+        compound.putFloat("ypos", o.ypos);
+        compound.putFloat("zpos", o.zpos);
+        compound.putFloat("xoff", o.xoffset);
+        compound.putFloat("yoff", o.yoffset);
+        compound.putFloat("zoff", o.zoffset);
+        compound.putFloat("tick", o.tick);
         compound.putBoolean("running", o.running);
         compound.putBoolean("positiveX", o.positiveX);
         compound.putBoolean("positiveZ", o.positiveZ);

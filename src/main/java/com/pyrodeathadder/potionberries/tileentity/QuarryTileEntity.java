@@ -5,9 +5,15 @@ import com.pyrodeathadder.potionberries.container.QuarryContainer;
 import com.pyrodeathadder.potionberries.init.BlockInit;
 import com.pyrodeathadder.potionberries.init.ModTileEntityType;
 import com.pyrodeathadder.potionberries.util.helpers.NBTHelper;
+import com.pyrodeathadder.potionberries.util.packets.PotionBerriesPacketHandler;
+import com.sun.jna.Library;
+import com.sun.jna.platform.win32.WinNT;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.Vector3f;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -16,14 +22,20 @@ import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.INamedContainerProvider;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.play.server.SUpdateTileEntityPacket;
 import net.minecraft.tileentity.*;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
+import net.minecraftforge.fml.network.NetworkDirection;
+import net.minecraftforge.fml.network.PacketDistributor;
+import net.minecraftforge.fml.network.simple.SimpleChannel;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import net.minecraftforge.items.ItemStackHandler;
@@ -39,9 +51,9 @@ import static com.pyrodeathadder.potionberries.objects.blocks.QuarryFrame.SECTIO
 
 public class QuarryTileEntity extends TileEntity implements ITickableTileEntity, INamedContainerProvider {
 
-    public int xoffset, yoffset, zoffset, xpos, ypos, zpos, tick;
+    public float xoffset, yoffset, zoffset, xpos, ypos, zpos, tick;
     public int gridXoffset, gridZoffset, gridSize;
-    public boolean positiveX,positiveZ;
+    public boolean positiveX, positiveZ;
     public boolean initialised, running = false;
     public BlockPos previousBlockBreak;
     public boolean xAligned;
@@ -53,8 +65,8 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
     public static HashMap<String, Integer> quarryBlocksMinned = new HashMap<>();
     public static ArrayList<String> voidItemNames = new ArrayList<String>();
     private int tickGoal = 100;
-    private boolean movingToNextBlock;
-    private BlockPos nextBlockPosition;
+    public boolean movingToNextBlock;
+    public BlockPos nextBlockPosition;
     public boolean finished = false;
 
     public QuarryTileEntity(final TileEntityType<?> tileEntityType) {
@@ -69,7 +81,7 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
     public void tick() {
         if (!initialised) return;
         else {
-            if(finished) {
+            if (finished) {
                 removeStructure();
                 initialised = false;
             }
@@ -86,36 +98,42 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
         }
 
         //try and remove items inside internalStorage buffer
-        if(quarryStorage != null && quarryInternalStorage.size() > 0) {
+        if (quarryStorage != null && quarryInternalStorage.size() > 0) {
             ItemStack stack = quarryInternalStorage.get(0);
             quarryInternalStorage.remove(0);
             quarryStorage.getCapability(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, Direction.DOWN).ifPresent(it -> {
-                ItemStack te = ItemHandlerHelper.insertItemStacked(it,new ItemStack(stack.getItem(),stack.getCount()),false);
-                if (te != ItemStack.EMPTY)  quarryInternalStorage.add(te);
+                ItemStack te = ItemHandlerHelper.insertItemStacked(it, new ItemStack(stack.getItem(), stack.getCount()), false);
+                if (te != ItemStack.EMPTY) quarryInternalStorage.add(te);
             });
+        }
+
+
+        //send packets to update renderer
+        if (world instanceof ServerWorld) {
+            PacketDistributor.TRACKING_CHUNK.with(() -> world.getChunkAt(this.getPos())).send(new SUpdateTileEntityPacket(this.getPos(), 0, this.getUpdateTag())); // .sendTo(new SUpdateTileEntityPacket(this.getPos(), -1, this.getUpdateTag()),manager, NetworkDirection.PLAY_TO_CLIENT);
         }
     }
 
     public void CheckTextureChange() {
-        if(!this.initialised){
-            world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(TEXTURE,0));
+        if (!this.initialised) {
+            world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(TEXTURE, 0));
         } else {
-            if(!running && quarryStorage == null && quarryInternalStorage.size() != 0) {
-            world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,1));
-            } else if(!running && quarryStorage == null && quarryInternalStorage.size() == 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,2));
-            } else if(!running && quarryStorage != null && quarryInternalStorage.size() != 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,3));
-            } else if(!running && quarryStorage != null && quarryInternalStorage.size() == 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,4));
-            } else if(running && quarryStorage == null && quarryInternalStorage.size() != 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,5));
-            } else if(running && quarryStorage == null && quarryInternalStorage.size() == 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,6));
-            } else if(running && quarryStorage != null && quarryInternalStorage.size() != 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,7));
-            } else if(running && quarryStorage != null && quarryInternalStorage.size() == 0) {
-                world.setBlockState(this.getPos(),BlockInit.QUARRY.get().getDefaultState().with(FACING,getBlockState().get(FACING)).with(TEXTURE,8));
+            if (!running && quarryStorage == null && quarryInternalStorage.size() != 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 1));
+            } else if (!running && quarryStorage == null && quarryInternalStorage.size() == 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 2));
+            } else if (!running && quarryStorage != null && quarryInternalStorage.size() != 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 3));
+            } else if (!running && quarryStorage != null && quarryInternalStorage.size() == 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 4));
+            } else if (running && quarryStorage == null && quarryInternalStorage.size() != 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 5));
+            } else if (running && quarryStorage == null && quarryInternalStorage.size() == 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 6));
+            } else if (running && quarryStorage != null && quarryInternalStorage.size() != 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 7));
+            } else if (running && quarryStorage != null && quarryInternalStorage.size() == 0) {
+                world.setBlockState(this.getPos(), BlockInit.QUARRY.get().getDefaultState().with(FACING, getBlockState().get(FACING)).with(TEXTURE, 8));
             }
         }
     }
@@ -136,7 +154,7 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
     };
 
     public void init(int DistanceAway, int DistanceRight) {
-        if(!(world instanceof ServerWorld)) return;
+        if (!(world instanceof ServerWorld)) return;
         int a = DistanceAway;
         int b = DistanceRight;
         TileEntity te = world.getTileEntity(this.pos.add(0, 1, 0));
@@ -182,6 +200,8 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
         }
     }
 
+
+
     private void execute() {
         BlockPos posToBreak = new BlockPos(0, 0, 0);
         switch (facingPositon) {
@@ -198,76 +218,40 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
                 posToBreak = new BlockPos(this.xpos + zoffset, yoffset + this.ypos, this.zpos - xoffset);
                 break;
         }
-        if(!movingToNextBlock) destroyBlock(posToBreak, true, null);
-        previousBlockBreak = new BlockPos(xoffset,yoffset,zoffset);
+        if (!movingToNextBlock) destroyBlock(posToBreak, true, null);
         moveBreakPosition();
-        spawnArm();
+        //spawnArm();
     }
 
-    private BlockPos quarryBlockRelative(BlockPos offset) {
-        if (world instanceof ServerWorld) {
-            switch (this.facingPositon) {
-                case "south":
-                    return new BlockPos(this.xpos + offset.getX(), offset.getY() + this.ypos, this.zpos + offset.getZ());
-                case "west":
-                    return new BlockPos(this.xpos - offset.getZ(), offset.getY() + this.ypos, this.zpos + offset.getX());
-                case "north":
-                    return new BlockPos(this.xpos - offset.getX(), offset.getY() + this.ypos, this.zpos - offset.getZ());
-                case "east":
-                    return new BlockPos(this.xpos + offset.getZ(), offset.getY() + this.ypos, this.zpos - offset.getX());
-            }
-            return offset;
+    public BlockPos quarryBlockRelative(BlockPos offset) {
+        switch (this.facingPositon) {
+            case "south":
+                return new BlockPos(this.xpos + offset.getX(), offset.getY() + this.ypos, this.zpos + offset.getZ());
+            case "west":
+                return new BlockPos(this.xpos - offset.getZ(), offset.getY() + this.ypos, this.zpos + offset.getX());
+            case "north":
+                return new BlockPos(this.xpos - offset.getX(), offset.getY() + this.ypos, this.zpos - offset.getZ());
+            case "east":
+                return new BlockPos(this.xpos + offset.getZ(), offset.getY() + this.ypos, this.zpos - offset.getX());
         }
-        return null;
-    }
-
-    private void spawnArm() {
-        World world = getWorld();
-        if (world instanceof ServerWorld && !finished) {
-
-            //CLEAR BLOCKS
-            for (int x = 0; x < this.width; x++) { world.setBlockState(quarryBlockRelative(new BlockPos(x, 5, previousBlockBreak.getZ())), Blocks.AIR.getDefaultState()); }
-            for (int z = 0; z < this.length; z++) { world.setBlockState(quarryBlockRelative(new BlockPos(previousBlockBreak.getX(), 5, z)), Blocks.AIR.getDefaultState()); }
-            for (int y = yoffset - 1; y < 5; y++) {
-                BlockState state = world.getBlockState(quarryBlockRelative(new BlockPos(previousBlockBreak.getX(), y, previousBlockBreak.getZ())));
-                if(state.getBlock() == BlockInit.QUARRYFRAME.get()) {
-                    world.setBlockState(quarryBlockRelative(new BlockPos(previousBlockBreak.getX(), y, previousBlockBreak.getZ())), Blocks.AIR.getDefaultState());
-                }
-            }
-
-            for (int x = 0; x < this.width; x++) {
-                world.setBlockState(quarryBlockRelative(new BlockPos(x, 5, zoffset)), BlockInit.QUARRYFRAME.get().getDefaultState().with(SECTION, xAligned? 1:0)); //Top Arm E,W
-            }
-            for (int z = 0; z < this.length; z++) {
-                world.setBlockState(quarryBlockRelative(new BlockPos(xoffset, 5, z)), BlockInit.QUARRYFRAME.get().getDefaultState().with(SECTION, xAligned? 0:1)); //Top Arm N,S
-            }
-            for (int y = yoffset + 1; y < 5; y++) {
-                world.setBlockState(quarryBlockRelative(new BlockPos(xoffset, y, zoffset)), BlockInit.QUARRYFRAME.get().getDefaultState().with(SECTION, 3)); //Extending Arm
-            }
-
-            world.setBlockState(quarryBlockRelative(new BlockPos(xoffset, yoffset + 1, zoffset)), BlockInit.QUARRYFRAME.get().getDefaultState().with(SECTION, 4)); //Top Arm Connection
-            world.setBlockState(quarryBlockRelative(new BlockPos(xoffset, 5, zoffset)), BlockInit.QUARRYFRAME.get().getDefaultState().with(SECTION, 2)); //Arm Tip
-        }
+        return offset;
     }
 
     private void moveBreakPosition() {
         if(movingToNextBlock) {
-            if(yoffset < nextBlockPosition.getY()) {
-                yoffset ++;
-            }else if(xoffset > nextBlockPosition.getX() || xoffset < nextBlockPosition.getX()) {
-                if (xoffset > nextBlockPosition.getX()){
-                    xoffset --;
-                } else if (xoffset < nextBlockPosition.getX()){
-                    xoffset ++;
-                }
-            } else if(zoffset > nextBlockPosition.getZ() || zoffset < nextBlockPosition.getZ()) {
-                if (zoffset > nextBlockPosition.getZ()){
-                    zoffset --;
-                } else if (zoffset < nextBlockPosition.getZ()){
-                    zoffset ++;
-                }
-            } else if(yoffset > nextBlockPosition.getY()) {
-                yoffset --;
+
+            Vector3f p = new Vector3f(nextBlockPosition.getX() - xoffset,nextBlockPosition.getY() - yoffset,nextBlockPosition.getZ() - zoffset);
+
+            if(Math.abs((p.getX()+p.getY()+p.getZ())/3) < 0.07) {
+                this.xoffset = nextBlockPosition.getX();
+                this.yoffset = nextBlockPosition.getY();
+                this.zoffset = nextBlockPosition.getZ();
+            } else {
+                p.normalize();
+                p.mul(0.125f);
+                this.xoffset += p.getX();
+                this.yoffset += p.getY();
+                this.zoffset += p.getZ();
             }
         } else {
             if(!finished) {
@@ -281,7 +265,7 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
             BlockState blockState = world.getBlockState(quarryBlockRelative(new BlockPos(xoffset, yoffset, zoffset)));
             float Hardness = blockState.getBlockHardness(world, quarryBlockRelative(new BlockPos(xoffset, yoffset, zoffset)));
             int harvest = blockState.getHarvestLevel();
-            int newTickRate = (int) (((Math.max(1, harvest) / 6f) + (Hardness / 80f)) * 1f);
+            int newTickRate = (int) (((Math.max(1, harvest) / 6f) + (Hardness / 80f)) * 70f);
             tickGoal = (blockState.isAir(world, pos) || !blockState.getFluidState().isEmpty()) ? 1 : newTickRate;
             movingToNextBlock = false;
             nextBlockPosition = null;
@@ -291,9 +275,9 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
 
     private void findNextBlock() {
         if(nextBlockPosition == null) {
-            int xoff = xoffset;
-            int yoff = yoffset;
-            int zoff = zoffset;
+            int xoff = (int)xoffset;
+            int yoff = (int)yoffset;
+            int zoff = (int)zoffset;
             boolean px = positiveX;
             boolean pz = positiveZ;
             BlockState blockState = world.getBlockState(quarryBlockRelative(new BlockPos(xoff, yoff, zoff)));
@@ -415,21 +399,25 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
     }
 
     @Override
+    public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket pkt) {
+        this.read(pkt.getNbtCompound());
+    }
+
+    @Override
     public void read(CompoundNBT compound) {
         super.read(compound);
         CompoundNBT initValues = compound.getCompound("initvalues");
         if(initValues != null) {
-            this.xpos = initValues.getInt("xpos");
-            this.ypos = initValues.getInt("ypos");
-            this.zpos = initValues.getInt("zpos");
-            this.xoffset = initValues.getInt("xoff");
-            this.yoffset = initValues.getInt("yoff");
-            this.zoffset = initValues.getInt("zoff");
+            this.xpos = initValues.getFloat("xpos");
+            this.ypos = initValues.getFloat("ypos");
+            this.zpos = initValues.getFloat("zpos");
+            this.xoffset = initValues.getFloat("xoff");
+            this.yoffset = initValues.getFloat("yoff");
+            this.zoffset = initValues.getFloat("zoff");
             this.tick = initValues.getInt("tick");
             this.running = initValues.getBoolean("running");
             this.positiveX = initValues.getBoolean("positiveX");
             this.positiveZ = initValues.getBoolean("positiveZ");
-            this.previousBlockBreak = new BlockPos(initValues.getInt("previousX"), 0, initValues.getInt("previousZ"));
             this.width = initValues.getInt("Width");
             this.length = initValues.getInt("Length");
             this.xAligned = initValues.getBoolean("xAligned");
@@ -440,7 +428,15 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
             this.gridSize = initValues.getInt("gridSize");
             this.gridXoffset = initValues.getInt("gridXOffset");
             this.gridZoffset = initValues.getInt("gridZOffset");
+            this.previousBlockBreak = new BlockPos(initValues.getInt("previousX"), 0, initValues.getInt("previousZ"));
         }
+    }
+
+    @Override
+    public CompoundNBT getUpdateTag() {
+        CompoundNBT nbt = new CompoundNBT();
+        write(nbt);
+        return nbt;
     }
 
     public void createStructure() {
@@ -472,7 +468,7 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
             for (int z = 0; z < this.length; z++) {
                 world.setBlockState(quarryBlockRelative(new BlockPos(xoffset, 5, z)), Blocks.AIR.getDefaultState());
             }
-            for (int y = yoffset + 1; y < 5; y++) {
+            for (int y = (int)yoffset + 1; y < 5; y++) {
                 world.setBlockState(quarryBlockRelative(new BlockPos(xoffset, y, zoffset)), Blocks.AIR.getDefaultState());
             }
 
@@ -493,6 +489,11 @@ public class QuarryTileEntity extends TileEntity implements ITickableTileEntity,
                 world.setBlockState(quarryBlockRelative(new BlockPos(width, 5, z)), Blocks.AIR.getDefaultState());
             }
         }
+    }
+
+    @Override
+    public AxisAlignedBB getRenderBoundingBox() {
+        return INFINITE_EXTENT_AABB;
     }
 
     @Override

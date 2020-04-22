@@ -1,15 +1,21 @@
 package com.pyrodeathadder.potionberries;
 
+import com.pyrodeathadder.potionberries.container.QuarryContainer;
 import com.pyrodeathadder.potionberries.init.BlockInit;
 import com.pyrodeathadder.potionberries.init.ItemInit;
 import com.pyrodeathadder.potionberries.init.ModTileEntityType;
 import com.pyrodeathadder.potionberries.objects.blocks.Berries;
 import com.pyrodeathadder.potionberries.objects.containers.ModContainerTypes;
+import com.pyrodeathadder.potionberries.renderers.QuarryArm;
+import com.pyrodeathadder.potionberries.tileentity.QuarryTileEntity;
 import com.pyrodeathadder.potionberries.util.packets.PotionBerriesPacketHandler;
 import com.pyrodeathadder.potionberries.util.packets.PotionBerriesWorldPacket;
 import com.pyrodeathadder.potionberries.world.gen.OreGen;
+import mcjty.lib.setup.Registration;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderTypeLookup;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
+import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.item.*;
 import net.minecraft.item.crafting.Ingredient;
 import net.minecraft.util.ResourceLocation;
@@ -19,6 +25,7 @@ import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
+import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -48,6 +55,7 @@ public class PotionBerries
         ModTileEntityType.TILE_ENTITY_TYPE.register(modEventBus);
         ModContainerTypes.CONTAINER_TYPES.register(modEventBus);
         PotionBerriesPacketHandler.RegisterPackets();
+        //QuarryArm.register();
 
         instance = this;
 
@@ -75,6 +83,8 @@ public class PotionBerries
 
     private void doClientStuff(final FMLClientSetupEvent event)
     {
+        ClientRegistry.bindTileEntityRenderer(ModTileEntityType.QUARRY.get(),QuarryArm::new);
+
         RenderTypeLookup.setRenderLayer(BlockInit.NIGHT_VISION_BERRY_BUSH_1.get(), RenderType.getCutout());
         RenderTypeLookup.setRenderLayer(BlockInit.LONG_NIGHT_VISION_BERRY_BUSH_1.get(), RenderType.getCutout());
         RenderTypeLookup.setRenderLayer(BlockInit.INVISIBILITY_BERRY_BUSH_1.get(), RenderType.getCutout());
@@ -267,6 +277,7 @@ public class PotionBerries
 
         RenderTypeLookup.setRenderLayer(BlockInit.QUARRYFRAME.get(), RenderType.getTranslucent());
         RenderTypeLookup.setRenderLayer(BlockInit.QUARRY_STRUCTURE_FRAME.get(), RenderType.getTranslucent());
+
     }
 
     @SubscribeEvent
